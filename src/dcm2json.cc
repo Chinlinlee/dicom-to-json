@@ -113,8 +113,23 @@ char *getDCMJson(char *ifname)
             OFString csetString;
             if (dset->findAndGetOFStringArray(DCM_SpecificCharacterSet, csetString).good())
             {
-                if (csetString.compare("ISO_IR 192") != 0 && csetString.compare("ISO_IR 6") != 0)
+                if (csetString.compare("ISO_IR 6") == 0) 
                 {
+                    if (dset->containsExtendedCharacters(OFFalse /*checkAllStrings*/))
+                    {
+                        OFLOG_FATAL(dcm2jsonLogger, "dataset contains extended characters but SpecificCharacterSet (0008,0005) is 'ISO_IR 6'");
+                        result = EXITCODE_CANNOT_CONVERT_TO_UNICODE;
+                    }
+                }
+                else if (csetString.compare("ISO_IR 192") == 0)
+                {
+
+                }
+                else 
+                {
+                                        /* we have a character set other than ASCII or UTF-8. Perform conversion. */
+#ifdef DCMTK_ENABLE_CHARSET_CONVERSION
+                    /* convert all DICOM strings to UTF-8 */
                     OFLOG_INFO(dcm2jsonLogger, "converting all element values that are affected by SpecificCharacterSet (0008,0005) to UTF-8");
                     status = dset->convertToUTF8();
                     if (status.bad())
@@ -122,6 +137,10 @@ char *getDCMJson(char *ifname)
                         OFLOG_FATAL(dcm2jsonLogger, status.text() << ": converting file to UTF-8: " << ifname);
                         result = EXITCODE_CANNOT_CONVERT_TO_UNICODE;
                     }
+#else
+                    OFLOG_FATAL(dcm2jsonLogger, "character set conversion not available");
+                    result = EXITCODE_CANNOT_CONVERT_TO_UNICODE;
+#endif
                 }
             }
             if (result == 0)
