@@ -90,6 +90,7 @@ static char rcsid[] = "$dcmtk: " OFFIS_CONSOLE_APPLICATION " v" OFFIS_DCMTK_VERS
 
 #include <assert.h>
 #include <node_api.h>
+#include "dcm2json.h"
 
 
 char *getDCMJson(char *ifname)
@@ -119,6 +120,7 @@ char *getDCMJson(char *ifname)
                     {
                         OFLOG_FATAL(dcm2jsonLogger, "dataset contains extended characters but SpecificCharacterSet (0008,0005) is 'ISO_IR 6'");
                         result = EXITCODE_CANNOT_CONVERT_TO_UNICODE;
+                        return "80";
                     }
                 }
                 else if (csetString.compare("ISO_IR 192") == 0)
@@ -136,6 +138,7 @@ char *getDCMJson(char *ifname)
                     {
                         OFLOG_FATAL(dcm2jsonLogger, status.text() << ": converting file to UTF-8: " << ifname);
                         result = EXITCODE_CANNOT_CONVERT_TO_UNICODE;
+                        return "80";
                     }
 #else
                     OFLOG_FATAL(dcm2jsonLogger, "character set conversion not available");
@@ -151,6 +154,7 @@ char *getDCMJson(char *ifname)
                 {
                     OFLOG_FATAL(dcm2jsonLogger, status.text() << ": " << ifname);
                     result = EXITCODE_CANNOT_WRITE_VALID_JSON;
+                    return "81";
                 }
                 //COUT << stream.str();
                 auto  streamStr = stream.str();
@@ -164,7 +168,8 @@ char *getDCMJson(char *ifname)
         }
         else
         {
-            return NULL;
+            OFLOG_FATAL(dcm2jsonLogger, status.text() << ": " << ifname);
+            return "2";
         }
     }
     return NULL;
@@ -172,7 +177,7 @@ char *getDCMJson(char *ifname)
 
 
 
-static napi_value dcm2json(napi_env env, napi_callback_info info)
+napi_value DCM2JSON::dcm2json(napi_env env, napi_callback_info info)
 {
     napi_status napiStatus;
     napi_value jsonResult[1];
@@ -185,8 +190,19 @@ static napi_value dcm2json(napi_env env, napi_callback_info info)
     napiStatus = napi_get_value_string_utf8(env, args[0], ifname, 741478763, &str_size);
     OFLOG_INFO(dcm2jsonLogger, ifname);
     char* dcmjson = getDCMJson(ifname);
-
-    if (dcmjson != NULL) 
+    if (dcmjson == "81") 
+    {
+        napiStatus = napi_throw_error(env, "81" , "EXITCODE_CANNOT_WRITE_VALID_JSON");
+    }
+    else if (dcmjson == "80") 
+    {
+        napiStatus = napi_throw_error(env, "81" , "EXITCODE_CANNOT_CONVERT_TO_UNICODE");
+    }
+    else if (dcmjson == "2") 
+    {
+        napiStatus = napi_throw_error(env, "404" , "No such file or directory or not a valid DICOM file");
+    }
+    else
     {
         napiStatus = napi_create_string_utf8(env, dcmjson, NAPI_AUTO_LENGTH, jsonResult);
         napi_value global;
@@ -194,46 +210,5 @@ static napi_value dcm2json(napi_env env, napi_callback_info info)
         napi_value cbresult;
         napiStatus = napi_call_function(env, global, cb, 1, jsonResult, &cbresult);
     }
-    else 
-    {
-        napiStatus = napi_throw_error(env, "404" , "The dcmtk status is bad , maybe is no such file");
-    }
     return NULL;
 }
-
-#define NAPI_CALL(env, call)                                      \
-  do {                                                            \
-    napi_status status = (call);                                  \
-    if (status != napi_ok) {                                      \
-      const napi_extended_error_info* error_info = NULL;          \
-      napi_get_last_error_info((env), &error_info);               \
-      bool is_pending;                                            \
-      napi_is_exception_pending((env), &is_pending);              \
-      if (!is_pending) {                                          \
-        const char* message = (error_info->error_message == NULL) \
-            ? "empty error message"                               \
-            : error_info->error_message;                          \
-        napi_throw_error((env), NULL, message);                   \
-        return NULL;                                              \
-      }                                                           \
-    }                                                             \
-  } while(0)
-  
-#define DECLARE_NAPI_METHOD(name, func) { name, 0, func, 0, 0, 0, napi_default, 0 }
-static napi_value Init(napi_env env, napi_value exports)
-{
-    napi_property_descriptor desc[] = { 
-        DECLARE_NAPI_METHOD("dcm2json", dcm2json)
-    };
-    /*napi_define_properties(env, exports, sizeof(desc) / sizeof(*desc), desc);
-    return exports;*/
-    NAPI_CALL(env ,  napi_create_function(env,
-                                          "", 
-                                          NAPI_AUTO_LENGTH, 
-                                          dcm2json, 
-                                          NULL, 
-                                          &exports));
-    return exports;
-}
-
-NAPI_MODULE(NODE_GYP_MODULE_NAME, Init);

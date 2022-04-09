@@ -1,4 +1,13 @@
+# ignore cmake build and prebuilds files
 build/
-node_modules/
 prebuilds/
+
+# ignore node.js npm packages
+/node_modules/
+
+# ignore self-test dicom file
 /example/input.dcm
+
+# ignore vscode settings
+/.vs
+/.vscode
