@@ -291,7 +291,6 @@ char* getDCMXML(char *ifname) {
                 //important!
                 //use strcpy avoid char* empty
                 strcpy(item , streamStr.c_str());
-                OFLOG_INFO(dcm2xmlLogger , "get xml success");
                 return item;
             }
         } 
@@ -315,13 +314,23 @@ napi_value DCM2XML::dcm2xml(napi_env env, napi_callback_info info)
     size_t argc = 2;
     napi_value args[2];
     napiStatus = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
-    char *ifname = (char *)malloc(741478763* sizeof(char));
-    size_t str_size;
-    napi_value cb = args[1];
-    napiStatus = napi_get_value_string_utf8(env, args[0], ifname, 741478763, &str_size);
-    OFLOG_INFO(dcm2xmlLogger, ifname);
-    char* dcmXML = getDCMXML(ifname);
 
+    //Get the size of filename string
+    size_t str_size;
+    napiStatus = napi_get_value_string_utf8(env, args[0], NULL, 0, &str_size);
+    str_size += 1;
+
+    // Get the callback function
+    napi_value cb = args[1];
+
+    /* Give char* memory address and initial zero value
+     * The str_size+1 that because string is ['1', '2', \0], so need add 1 length for null value in tail
+    */
+    char *ifname =  (char*)calloc(str_size + 1, sizeof(char));
+    size_t str_size_read;
+    napiStatus = napi_get_value_string_utf8(env, args[0], ifname, str_size+1 , &str_size_read);
+
+    char* dcmXML = getDCMXML(ifname);
     if (dcmXML != NULL) 
     {
         napiStatus = napi_create_string_utf8(env, dcmXML, NAPI_AUTO_LENGTH, xmlResult);
@@ -334,5 +343,6 @@ napi_value DCM2XML::dcm2xml(napi_env env, napi_callback_info info)
     {
         napiStatus = napi_throw_error(env, "404" , "The dcmtk status is bad , maybe is no such file");
     }
+    free(ifname);
     return NULL;
 }
