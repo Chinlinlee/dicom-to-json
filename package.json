@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "my-build": "run-script-os",
-    "my-build:win32": "npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"%INIT_CWD%/config/include/libiconv-1.16\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1 --CDBUILD_SHARED_LIBS:BOOL=\"1\"",
-    "my-build:linux": "npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"/usr/local/apps\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1",
+    "my-build:win32": "npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"%INIT_CWD%/config/include/libiconv-1.16\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1 --CDBUILD_SHARED_LIBS:BOOL=\"1\" --CDnapi_build_version=4",
+    "my-build:linux": "npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"/usr/local/apps\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1 --CDnapi_build_version=4",
     "install": "run-script-os",
-    "install:win32": "npx prebuild-install -r napi || npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"%INIT_CWD%/config/include/libiconv-1.16\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1 --CDBUILD_SHARED_LIBS:BOOL=\"1\"",
-    "install:linux": "npx prebuild-install -r napi || npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"/usr/local/apps\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1",
+    "install:win32": "npx prebuild-install -r napi || npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"%INIT_CWD%/config/include/libiconv-1.16\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1 --CDBUILD_SHARED_LIBS:BOOL=\"1\" --CDnapi_build_version=4",
+    "install:linux": "npx prebuild-install -r napi || npx cmake-js compile --CDWITH_LIBICONVINC:PATH=\"/usr/local/apps\" --CDDCMTK_ENABLE_CHARSET_CONVERSION:STRING=\"libiconv\" --CDDCMTK_WITH_ICONV:BOOL=1 --CDnapi_build_version=4",
     "prebuild": "npx prebuild -t 4 -r napi --all --verbose --backend cmake-js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,7 +20,8 @@
     "bindings": "^1.5.0",
     "cmake-js": "^6.2.1",
     "node-addon-api": "^4.0.0",
-    "prebuild-install": "^6.1.4"
+    "prebuild-install": "^6.1.4",
+    "run-script-os": "^1.1.6"
   },
   "standard-version": {
     "skip": {
@@ -39,8 +40,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Chinlinlee/dicom-to-json.git"
-  },
-  "devDependencies": {
-    "run-script-os": "^1.1.6"
   }
 }
